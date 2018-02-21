@@ -2,6 +2,7 @@ package docker
 
 import (
     "net"
+    "fmt"
 
     "golang.org/x/crypto/ssh"
 )
@@ -23,6 +24,7 @@ func (d *dialerSSH) Dial(network, addr string) (net.Conn, error) {
 
     conn, err := client.Dial("unix", d.socket)
     if err != nil {
+        fmt.Println("ssh err ", err)
         return nil, err
     }
 

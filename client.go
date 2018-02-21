@@ -4,7 +4,7 @@ import (
     "net/http"
 
     "golang.org/x/crypto/ssh"
-    "github.com/moby/moby/client"
+    "github.com/docker/docker/client"
 )
 
 func NewSSHClient(host string, unixSocket string, apiVersion string, sshConfig *ssh.ClientConfig) (*client.Client, error) {
