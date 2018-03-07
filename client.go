@@ -13,6 +13,8 @@ import (
     "github.com/docker/docker/api/types"
     "github.com/docker/docker/api/types/swarm"
     "github.com/docker/docker/api/types/filters"
+
+    "github.com/mitchellh/mapstructure"
 )
 
 var (
@@ -68,6 +70,27 @@ func (client *Client) GetSwarmServices (ctx context.Context, options map[string]
 
         return client.ServiceList(ctx, types.ServiceListOptions{ Filters: opts, })
     }
+}
+
+// UpdateSwarmService updates a service with the given params
+//
+// spec and opts arguments are map[string]interface{} that will be mapped respectively
+// to swarm.ServiceSpec and types.ServiceUpdateOptions structures
+func (client *Client) UpdateSwarmService (ctx context.Context, id string, version swarm.Version, spec swarm.ServiceSpec, opts map[string]interface{}) (types.ServiceUpdateResponse, error) {
+    //s := swarm.ServiceSpec{}
+    o := types.ServiceUpdateOptions{}
+
+    // Mapping to ServiceSpec
+    //if err := mapstructure.Decode(spec, &s); err != nil {
+        //return types.ServiceUpdateResponse{}, err
+    //}
+
+    // Mapping to UpdateServiceOptions
+    if err := mapstructure.Decode(opts, &o); err != nil {
+        return types.ServiceUpdateResponse{}, err
+    }
+
+    return client.ServiceUpdate(ctx, id, version, spec, o)
 }
 
 // FindServiceByID searchs and returns the swarm service corresponding to
