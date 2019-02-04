@@ -2,6 +2,7 @@ package docker
 
 import (
 	//"fmt"
+	"context"
 	"net/http"
 
 	"golang.org/x/crypto/ssh"
@@ -10,20 +11,23 @@ import (
 	//"github.com/docker/docker/api/types/filters"
 	//"github.com/docker/docker/api/types/swarm"
 	docker "github.com/docker/docker/client"
-	//"golang.org/x/net/context"
 	//"github.com/mitchellh/mapstructure"
 )
 
 // Client embeds just docker client
 type Client struct {
+	ctx context.Context
+
 	*docker.Client
 }
 
 // NewSSHClient returns a docker client connected to server using ssh connection
-func NewSSHClient(host string, unixSocket string, apiVersion string, sshConfig *ssh.ClientConfig) (*Client, error) {
+func NewSSHClient(ctx context.Context, host string, unixSocket string, apiVersion string, sshConfig *ssh.ClientConfig) (*Client, error) {
 	var dockerClient *docker.Client
 
-	client := &Client{}
+	client := &Client{
+		ctx: ctx,
+	}
 
 	dialer := &dialerSSH{
 		host:   host,
@@ -50,10 +54,12 @@ func NewSSHClient(host string, unixSocket string, apiVersion string, sshConfig *
 }
 
 // NewClient returns a docker client with given paramters
-func NewClient(host string, apiVersion string, httpClient *http.Client) (*Client, error) {
+func NewClient(ctx context.Context, host string, apiVersion string, httpClient *http.Client) (*Client, error) {
 	var dockerClient *docker.Client
 
-	client := &Client{}
+	client := &Client{
+		ctx: ctx,
+	}
 
 	dockerClient, err := docker.NewClient(host, apiVersion, httpClient, nil)
 	if err != nil {
@@ -66,9 +72,11 @@ func NewClient(host string, apiVersion string, httpClient *http.Client) (*Client
 }
 
 // NewDefaultClient returns a docker client using default function
-func NewDefaultClient() (*Client, error) {
+func NewDefaultClient(ctx context.Context) (*Client, error) {
 
-	client := &Client{}
+	client := &Client{
+		ctx: ctx,
+	}
 
 	dockerClient, err := docker.NewEnvClient()
 	if err != nil {
