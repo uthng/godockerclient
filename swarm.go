@@ -37,17 +37,58 @@ func (client *Client) SwarmFindServiceByID(id string, services []swarm.Service) 
 	return nil, fmt.Errorf("No service with ID %s found", id)
 }
 
-// SwarmFindServiceByName searchs and returns the swarm service corresponding
-// to the given pattern
-func (client *Client) SwarmFindServiceByName(pattern string, services []swarm.Service) []swarm.Service {
+// SwarmFindServiceByName searchs and returns the swarm services
+// that their names match the given pattern
+func (client *Client) SwarmFindServiceByName(pattern string, services []swarm.Service) ([]swarm.Service, error) {
 	var srvs []swarm.Service
 
 	for _, service := range services {
 		matched, err := regexp.MatchString(pattern, service.Spec.Annotations.Name)
-		if err != nil && matched {
+		if err != nil {
+			return srvs, err
+		}
+
+		if matched {
 			srvs = append(srvs, service)
 		}
 	}
 
-	return srvs
+	return srvs, nil
+}
+
+// SwarmDeleteServices removes all swarm services with the name matching
+// the given pattern. It returns a list of deleted services.
+func (client *Client) SwarmDeleteServices(pattern string) ([]swarm.Service, error) {
+	var srvs []swarm.Service
+
+	// Get all services
+	services, err := client.SwarmGetServices(nil)
+	if err != nil {
+		return srvs, err
+	}
+
+	// Find services matching pattern in its name
+	servicesMatched, err := client.SwarmFindServiceByName(pattern, services)
+	if err != nil {
+		return srvs, err
+	}
+
+	// Loop to remove
+	for _, s := range servicesMatched {
+		matched, err := regexp.MatchString(pattern, s.Spec.Annotations.Name)
+		if err != nil {
+			return srvs, err
+		}
+
+		if matched {
+			err := client.ServiceRemove(client.ctx, s.ID)
+			if err != nil {
+				return srvs, err
+			}
+
+			srvs = append(srvs, s)
+		}
+	}
+
+	return srvs, nil
 }
